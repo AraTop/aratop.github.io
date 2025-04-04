@@ -110,7 +110,7 @@
             }
             
             // Проверка логина
-            checkLoginBtn.addEventListener('click', async () => {
+            checkLoginBtn.addEventListener('click', () => {
                 const login = document.getElementById('login').value.trim();
                 if (!login) {
                     tg.showAlert("Введите Steam логин!");
@@ -119,45 +119,15 @@
                 
                 showLoader(true);
                 
-                try {
-                    // Отправляем данные в бота для проверки через API
-                    const response = await fetch('https://ваш-сервер.com/api/check_login', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            login: login,
-                            tg_data: tg.initData
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.error) {
-                        tg.showAlert(result.message || "Ошибка проверки логина");
-                        showLoader(false);
-                        return;
-                    }
-                    
-                    if (!result.status) {
-                        tg.showAlert("Этот аккаунт нельзя пополнить. Проверьте логин или региональные ограничения.");
-                        showLoader(false);
-                        return;
-                    }
-                    
-                    canTopUp = true;
-                    showStep("step2");
-                } catch (error) {
-                    tg.showAlert("Ошибка соединения с сервером");
-                    console.error(error);
-                } finally {
-                    showLoader(false);
-                }
+                // Отправляем данные боту через WebAppData
+                tg.sendData(JSON.stringify({
+                    action: "check_login",
+                    login: login
+                }));
             });
             
             // Отправка заказа
-            submitBtn.addEventListener('click', async () => {
+            submitBtn.addEventListener('click', () => {
                 if (!canTopUp) {
                     tg.showAlert("Сначала проверьте логин");
                     return;
@@ -173,42 +143,12 @@
                 
                 showLoader(true);
                 
-                try {
-                    // Отправляем данные в бота для создания заказа
-                    const response = await fetch('https://ваш-сервер.com/api/create_order', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            login: login,
-                            amount: amount,
-                            tg_data: tg.initData
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.error) {
-                        tg.showAlert(result.message || "Ошибка создания заказа");
-                        showLoader(false);
-                        return;
-                    }
-                    
-                    document.getElementById('resultText').innerHTML = `
-                        ✅ Заказ #${result.id} создан!<br><br>
-                        Логин: ${login}<br>
-                        Сумма: ${amount}$<br><br>
-                        Баланс будет зачислен в течение 15 минут.
-                    `;
-                    
-                    showStep("step3");
-                } catch (error) {
-                    tg.showAlert("Ошибка соединения с сервером");
-                    console.error(error);
-                } finally {
-                    showLoader(false);
-                }
+                // Отправляем данные боту через WebAppData
+                tg.sendData(JSON.stringify({
+                    action: "create_order",
+                    login: login,
+                    amount: amount
+                }));
             });
             
             // Начать заново
@@ -217,6 +157,41 @@
                 document.getElementById('amount').value = '';
                 canTopUp = false;
                 showStep("step1");
+            });
+            
+            // Обработчик сообщений от бота
+            tg.onEvent('messageSent', (message) => {
+                try {
+                    const data = JSON.parse(message);
+                    
+                    if (data.action === "login_checked") {
+                        showLoader(false);
+                        
+                        if (data.status) {
+                            canTopUp = true;
+                            showStep("step2");
+                        } else {
+                            tg.showAlert(data.message || "Этот аккаунт нельзя пополнить");
+                        }
+                    }
+                    else if (data.action === "order_created") {
+                        showLoader(false);
+                        
+                        if (data.success) {
+                            document.getElementById('resultText').innerHTML = `
+                                ✅ Заказ #${data.order_id} создан!<br><br>
+                                Логин: ${data.login}<br>
+                                Сумма: ${data.amount}$<br><br>
+                                Баланс будет зачислен в течение 15 минут.
+                            `;
+                            showStep("step3");
+                        } else {
+                            tg.showAlert(data.message || "Ошибка создания заказа");
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing message:", e);
+                }
             });
         }
         

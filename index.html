@@ -3,73 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="telegram-web-app-bot-domain" content="ваш-хостинг.com">
     <title>Steam Top-Up</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--tg-theme-bg-color, #17212b);
-            color: var(--tg-theme-text-color, #fff);
+            font-family: Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
             padding: 20px;
             margin: 0;
         }
-        .container {
-            max-width: 100%;
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        input, button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 10px;
+        button {
+            background: var(--tg-theme-button-color, #50a8eb);
+            color: white;
             border: none;
-            font-size: 16px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            width: 100%;
         }
         input {
-            background: rgba(255,255,255,0.1);
-            color: inherit;
-        }
-        button {
-            background: var(--tg-theme-button-color, #2ea6ff);
-            color: white;
-            font-weight: bold;
-            margin-top: 10px;
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            box-sizing: border-box;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>Пополнение Steam</h2>
-        <div class="input-group">
-            <input type="text" id="login" placeholder="Steam логин">
-        </div>
-        <div class="input-group">
-            <input type="number" id="amount" placeholder="Сумма (USD)" min="1">
-        </div>
-        <button id="submit">Пополнить</button>
-    </div>
+    <h3>Пополнение Steam</h3>
+    <input type="text" id="login" placeholder="Steam логин">
+    <input type="number" id="amount" placeholder="Сумма ($)" min="1">
+    <button id="submitBtn">Отправить</button>
 
     <script>
-        const tg = Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
-
-        document.getElementById('submit').addEventListener('click', () => {
-            const login = document.getElementById('login').value.trim();
-            const amount = parseFloat(document.getElementById('amount').value);
-
-            if (!login || !amount) {
-                tg.showAlert('Заполните все поля!');
-                return;
-            }
-
-            tg.sendData(JSON.stringify({
-                login: login,
-                amount: amount
-            }));
-        });
+        // Инициализация WebApp
+        const tg = window.Telegram.WebApp;
+        
+        // Основная функция
+        function init() {
+            tg.expand(); // Раскрываем на весь экран
+            tg.MainButton.setText("Готово").show();
+            
+            const btn = document.getElementById("submitBtn");
+            const loginInput = document.getElementById("login");
+            const amountInput = document.getElementById("amount");
+            
+            // Обработчик кнопки
+            btn.addEventListener("click", () => {
+                if (!loginInput.value || !amountInput.value) {
+                    tg.showAlert("Заполните все поля!");
+                    return;
+                }
+                
+                const data = {
+                    login: loginInput.value,
+                    amount: parseFloat(amountInput.value)
+                };
+                
+                tg.sendData(JSON.stringify(data));
+                tg.close();
+            });
+        }
+        
+        // Запускаем когда WebApp готов
+        tg.ready();
+        init();
     </script>
 </body>
 </html>

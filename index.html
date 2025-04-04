@@ -8,162 +8,50 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
             padding: 20px;
             margin: 0;
         }
-        .container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        button {
-            background: var(--tg-theme-button-color, #50a8eb);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-top: 10px;
+        input, button {
             width: 100%;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0;
+            padding: 10px;
+            margin: 10px 0;
             box-sizing: border-box;
         }
-        .step {
-            display: none;
-        }
-        .step.active {
-            display: block;
-        }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 2s linear infinite;
-            margin: 20px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        button {
+            background: #50a8eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h3>Пополнение Steam баланса</h3>
-        
-        <!-- Шаг 1: Ввод логина -->
-        <div id="step1" class="step active">
-            <p>Введите ваш Steam логин:</p>
-            <input type="text" id="login" placeholder="Steam логин">
-            <button id="checkLoginBtn">Проверить</button>
-        </div>
-        
-        <!-- Шаг 2: Ввод суммы -->
-        <div id="step2" class="step">
-            <p>Введите сумму пополнения ($):</p>
-            <input type="number" id="amount" placeholder="Сумма" min="1">
-            <button id="submitBtn">Пополнить</button>
-        </div>
-        
-        <!-- Шаг 3: Результат -->
-        <div id="step3" class="step">
-            <p id="resultText"></p>
-            <button id="restartBtn">Создать новый заказ</button>
-        </div>
-        
-        <!-- Лоадер -->
-        <div id="loader" class="loader" style="display: none;"></div>
-    </div>
+    <h3>Пополнение Steam</h3>
+    <input type="text" id="login" placeholder="Steam логин">
+    <input type="number" id="amount" placeholder="Сумма ($)" min="1">
+    <button id="submitBtn">Пополнить</button>
 
     <script>
         const tg = window.Telegram.WebApp;
-        let canTopUp = false;
         
-        // Инициализация
-        function init() {
-            tg.expand();
-            tg.enableClosingConfirmation();
+        document.getElementById('submitBtn').addEventListener('click', () => {
+            const login = document.getElementById('login').value;
+            const amount = document.getElementById('amount').value;
             
-            // Элементы
-            const checkLoginBtn = document.getElementById("checkLoginBtn");
-            const submitBtn = document.getElementById("submitBtn");
-            const restartBtn = document.getElementById("restartBtn");
-            
-            // Переключение шагов
-            function showStep(stepId) {
-                document.querySelectorAll('.step').forEach(step => {
-                    step.classList.remove('active');
-                });
-                document.getElementById(stepId).classList.add('active');
+            if (!login || !amount) {
+                tg.showAlert("Заполните все поля!");
+                return;
             }
             
-            // Показать лоадер
-            function showLoader(show) {
-                document.getElementById('loader').style.display = show ? 'block' : 'none';
-            }
-            
-            // Проверка логина
-            checkLoginBtn.addEventListener('click', () => {
-                const login = document.getElementById('login').value.trim();
-                if (!login) {
-                    tg.showAlert("Введите Steam логин!");
-                    return;
-                }
-                
-                showLoader(true);
-                
-                // Закрываем WebApp и передаем данные боту
-                tg.sendData(JSON.stringify({
-                    stage: "check_login",
-                    login: login
-                }));
-                tg.close();
-            });
-            
-            // Отправка заказа
-            submitBtn.addEventListener('click', () => {
-                if (!canTopUp) {
-                    tg.showAlert("Сначала проверьте логин");
-                    return;
-                }
-                
-                const login = document.getElementById('login').value.trim();
-                const amount = parseFloat(document.getElementById('amount').value);
-                
-                if (!amount || amount < 1) {
-                    tg.showAlert("Введите корректную сумму");
-                    return;
-                }
-                
-                showLoader(true);
-                
-                // Закрываем WebApp и передаем данные боту
-                tg.sendData(JSON.stringify({
-                    stage: "create_order",
-                    login: login,
-                    amount: amount
-                }));
-                tg.close();
-            });
-            
-            // Начать заново
-            restartBtn.addEventListener('click', () => {
-                document.getElementById('login').value = '';
-                document.getElementById('amount').value = '';
-                canTopUp = false;
-                showStep("step1");
-            });
-        }
+            tg.sendData(JSON.stringify({
+                login: login,
+                amount: amount
+            }));
+            tg.close();
+        });
         
         tg.ready();
-        init();
+        tg.expand();
     </script>
 </body>
 </html>

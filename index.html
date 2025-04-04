@@ -119,11 +119,12 @@
                 
                 showLoader(true);
                 
-                // Отправляем данные боту через WebAppData
+                // Закрываем WebApp и передаем данные боту
                 tg.sendData(JSON.stringify({
-                    action: "check_login",
+                    stage: "check_login",
                     login: login
                 }));
+                tg.close();
             });
             
             // Отправка заказа
@@ -143,12 +144,13 @@
                 
                 showLoader(true);
                 
-                // Отправляем данные боту через WebAppData
+                // Закрываем WebApp и передаем данные боту
                 tg.sendData(JSON.stringify({
-                    action: "create_order",
+                    stage: "create_order",
                     login: login,
                     amount: amount
                 }));
+                tg.close();
             });
             
             // Начать заново
@@ -157,41 +159,6 @@
                 document.getElementById('amount').value = '';
                 canTopUp = false;
                 showStep("step1");
-            });
-            
-            // Обработчик сообщений от бота
-            tg.onEvent('messageSent', (message) => {
-                try {
-                    const data = JSON.parse(message);
-                    
-                    if (data.action === "login_checked") {
-                        showLoader(false);
-                        
-                        if (data.status) {
-                            canTopUp = true;
-                            showStep("step2");
-                        } else {
-                            tg.showAlert(data.message || "Этот аккаунт нельзя пополнить");
-                        }
-                    }
-                    else if (data.action === "order_created") {
-                        showLoader(false);
-                        
-                        if (data.success) {
-                            document.getElementById('resultText').innerHTML = `
-                                ✅ Заказ #${data.order_id} создан!<br><br>
-                                Логин: ${data.login}<br>
-                                Сумма: ${data.amount}$<br><br>
-                                Баланс будет зачислен в течение 15 минут.
-                            `;
-                            showStep("step3");
-                        } else {
-                            tg.showAlert(data.message || "Ошибка создания заказа");
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error parsing message:", e);
-                }
             });
         }
         

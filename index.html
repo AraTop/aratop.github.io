@@ -4,29 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Пополнение Steam</title>
-    <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>Пополнение Steam баланса</h1>
-        
-        <div class="form-group">
-            <label for="steam-login">Steam логин или email:</label>
-            <input type="text" id="steam-login" placeholder="Введите ваш Steam логин">
-        </div>
-        
-        <div class="form-group">
-            <label for="amount">Сумма пополнения (руб):</label>
-            <input type="number" id="amount" placeholder="100" min="10" max="10000">
-        </div>
-        
-        <button id="check-btn" class="btn">Проверить аккаунт</button>
-        <button id="pay-btn" class="btn" disabled>Пополнить баланс</button>
-        
-        <div id="status" class="status"></div>
-    </div>
-    
-    <script src="app.js"></script>
+    <h2>Пополнение Steam</h2>
+    <input type="text" id="steam_login" placeholder="Введите Steam логин">
+    <input type="number" id="amount" placeholder="Сумма пополнения">
+    <button onclick="sendRequest()">Пополнить</button>
+
+    <script>
+        function sendRequest() {
+            let login = document.getElementById('steam_login').value;
+            let amount = document.getElementById('amount').value;
+            
+            if (!login || !amount) {
+                alert("Введите все данные!");
+                return;
+            }
+
+            fetch("https://your-backend.com/deposit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ steam_login: login, amount: amount })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert("Ошибка: " + data.message);
+                } else {
+                    alert("Успешно пополнено! ID платежа: " + data.id);
+                }
+            });
+        }
+    </script>
 </body>
 </html>
